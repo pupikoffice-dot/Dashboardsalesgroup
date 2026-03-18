@@ -1446,7 +1446,7 @@ function renderItemsUnderClient(rows) {
       const c1=f1.reduce((a,r)=>a+(r.cash||0),0),q1=f1.reduce((a,r)=>a+(r.qty||0),0);
       const c2=f2.reduce((a,r)=>a+(r.cash||0),0),q2=f2.reduce((a,r)=>a+(r.qty||0),0);
       const s1=c1<c2?'color:var(--red)':'',s2=c2<c1?'color:var(--red)':'';
-      h+=`<td data-sv="${c1}" data-qty="${q1}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
+      h+=`<td data-sv="${c1}" data-qty="${q1}" data-pv="${c2}" data-pqty="${q2}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
       rc+=c1;rq+=q1;gmc1[dc.m]=(gmc1[dc.m]||0)+c1;gmq1[dc.m]=(gmq1[dc.m]||0)+q1;
       gmc2[dc.m]=(gmc2[dc.m]||0)+c2;gmq2[dc.m]=(gmq2[dc.m]||0)+q2;
     });
@@ -1458,7 +1458,7 @@ function renderItemsUnderClient(rows) {
   cols.forEach(dc=>{
     const c1=gmc1[dc.m]||0,q1=gmq1[dc.m]||0,c2=gmc2[dc.m]||0,q2=gmq2[dc.m]||0;
     const s1=c1<c2?'color:var(--red)':'',s2=c2<c1?'color:var(--red)':'';
-    h+=`<td data-sv="${c1}" data-qty="${q1}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
+    h+=`<td data-sv="${c1}" data-qty="${q1}" data-pv="${c2}" data-pqty="${q2}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
   });
   h+=`<td data-sv="${gc}">${fmt(gc)}</td><td data-sv="${gq}" class="cm">${fmt(gq)}</td><td>—</td></tr></tfoot></table></div>`;
   return h;
@@ -1537,7 +1537,7 @@ function renderItemsSummaryTable(rows) {
       const c1=f1.reduce((a,r)=>a+(r.cash||0),0),q1=f1.reduce((a,r)=>a+(r.qty||0),0);
       const c2=f2.reduce((a,r)=>a+(r.cash||0),0),q2=f2.reduce((a,r)=>a+(r.qty||0),0);
       const s1=c1<c2?'color:var(--red)':'',s2=c2<c1?'color:var(--red)':'';
-      h+=`<td data-sv="${c1}" data-qty="${q1}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
+      h+=`<td data-sv="${c1}" data-qty="${q1}" data-pv="${c2}" data-pqty="${q2}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
       rc+=c1;rq+=q1;gmc1[dc.m]=(gmc1[dc.m]||0)+c1;gmq1[dc.m]=(gmq1[dc.m]||0)+q1;
       gmc2[dc.m]=(gmc2[dc.m]||0)+c2;gmq2[dc.m]=(gmq2[dc.m]||0)+q2;
     });
@@ -1549,7 +1549,7 @@ function renderItemsSummaryTable(rows) {
   cols.forEach(dc=>{
     const c1=gmc1[dc.m]||0,q1=gmq1[dc.m]||0,c2=gmc2[dc.m]||0,q2=gmq2[dc.m]||0;
     const s1=c1<c2?'color:var(--red)':'',s2=c2<c1?'color:var(--red)':'';
-    h+=`<td data-sv="${c1}" data-qty="${q1}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
+    h+=`<td data-sv="${c1}" data-qty="${q1}" data-pv="${c2}" data-pqty="${q2}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
   });
   h+=`<td data-sv="${gc}">${fmt(gc)}</td><td data-sv="${gq}" class="cm">${fmt(gq)}</td><td>—</td></tr></tfoot></table></div>`;
   return h;
@@ -1591,7 +1591,7 @@ function renderClientsUnderItem(rows) {
       const c1=f1.reduce((a,r)=>a+(r.cash||0),0),q1=f1.reduce((a,r)=>a+(r.qty||0),0);
       const c2=f2.reduce((a,r)=>a+(r.cash||0),0),q2=f2.reduce((a,r)=>a+(r.qty||0),0);
       const s1=c1<c2?'color:var(--red)':'',s2=c2<c1?'color:var(--red)':'';
-      h+=`<td data-sv="${c1}" data-qty="${q1}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
+      h+=`<td data-sv="${c1}" data-qty="${q1}" data-pv="${c2}" data-pqty="${q2}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
       rc+=c1;rq+=q1;gmc1[dc.m]=(gmc1[dc.m]||0)+c1;gmq1[dc.m]=(gmq1[dc.m]||0)+q1;
       gmc2[dc.m]=(gmc2[dc.m]||0)+c2;gmq2[dc.m]=(gmq2[dc.m]||0)+q2;
     });
@@ -1602,7 +1602,7 @@ function renderClientsUnderItem(rows) {
   cols.forEach(dc=>{
     const c1=gmc1[dc.m]||0,q1=gmq1[dc.m]||0,c2=gmc2[dc.m]||0,q2=gmq2[dc.m]||0;
     const s1=c1<c2?'color:var(--red)':'',s2=c2<c1?'color:var(--red)':'';
-    h+=`<td data-sv="${c1}" data-qty="${q1}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
+    h+=`<td data-sv="${c1}" data-qty="${q1}" data-pv="${c2}" data-pqty="${q2}"><div style="${s1}">${fmt0(c1)}<br/><span class="cm" style="font-size:.72rem">(${fmt0(q1)})</span></div><div class="mo-prev" style="${s2}">${fmt0(c2)}<br/><span class="cm" style="font-size:.65rem">(${fmt0(q2)})</span></div></td>`;
   });
   h+=`<td data-sv="${gc}">${fmt(gc)}</td><td data-sv="${gq}" class="cm">${fmt(gq)}</td><td style="color:var(--acc2)">${sqFmt}</td></tr></tfoot></table></div>`;
   return h;
@@ -1953,8 +1953,8 @@ function _buildFlatCSV(sectionData) {
 // Extract monthly split data as JS arrays (for XLS export).
 // Returns {cashRows: [[...], ...], qtyRows: [[...], ...]}
 // sectionData = [{id, name, table}]
-// Handles both legacy (cash/qty) tables and new dual-year tables (tw-dual-months).
 // Dual-year column layout: SKU(0) Name(1) months(2..n-4) TotalCash(n-3) TotalQty(n-2) Stock(n-1)
+// Each data row emits TWO rows: current year on top, prior year below.
 function _extractFlatSplitRows(sectionData) {
   function buildRows(mode) {
     const rows = [];
@@ -1963,13 +1963,14 @@ function _extractFlatSplitRows(sectionData) {
       const isDual = table.classList.contains('tw-dual-months');
       const ths = [...table.querySelectorAll('thead th')];
       const n   = ths.length;
+      // Cash tab skips TotalQty (n-2); Qty tab skips TotalCash (n-3)
+      const skipI = isDual ? (mode === 'cash' ? n-2 : n-3) : -1;
       if (!hdrDone) {
         if (isDual) {
-          // Cash tab skips TotalQty (n-2); Qty tab skips TotalCash (n-3)
-          const skipI = mode === 'cash' ? n-2 : n-3;
-          const hdrRow = ['ID / SKU', 'Name'];
-          ths.slice(2).forEach((th, j) => {
-            if (j+2 === skipI) return;
+          // Header starts directly with table columns (no extra id/name prefix)
+          const hdrRow = [];
+          ths.forEach((th, i) => {
+            if (i === skipI) return;
             const c = th.cloneNode(true);
             c.querySelectorAll('.si').forEach(e => e.remove());
             hdrRow.push(c.textContent.trim().replace(/\s+/g,' '));
@@ -1991,28 +1992,38 @@ function _extractFlatSplitRows(sectionData) {
       [...table.querySelectorAll('tbody tr, tfoot tr')].forEach(row => {
         const cells = [...row.querySelectorAll('td')];
         if (!cells.length) return;
-        const out = [];
         if (isDual) {
-          const skipI = mode === 'cash' ? n-2 : n-3;
-          // First two cols: ID / Name — strip .mo-prev noise
-          [cells[0], cells[1]].forEach(td => {
-            const c = td.cloneNode(true);
-            c.querySelectorAll('.si,.cm,.mo-prev').forEach(e => e.remove());
-            out.push(c.textContent.trim());
-          });
-          for (let i = 2; i < cells.length; i++) {
+          // Emit current-year row + prior-year row
+          const curRow = [], prevRow = [];
+          let prevTotal = 0;
+          for (let i = 0; i < cells.length; i++) {
             if (i === skipI) continue;
             const td = cells[i];
-            if (i <= n-4) {
-              // Month cell: read data attribute (current year only, no prior year)
-              out.push(Number(mode === 'cash' ? (td.dataset.sv ?? 0) : (td.dataset.qty ?? 0)));
+            if (i <= 1) {
+              // SKU / Name — strip prior-year sub-content
+              const c = td.cloneNode(true);
+              c.querySelectorAll('.si,.cm,.mo-prev').forEach(e => e.remove());
+              const txt = c.textContent.trim();
+              curRow.push(txt); prevRow.push(txt);
+            } else if (i <= n-4) {
+              // Month cell: separate current/prior year values
+              const cur  = Number(mode === 'cash' ? (td.dataset.sv    ?? 0) : (td.dataset.qty   ?? 0));
+              const prev = Number(mode === 'cash' ? (td.dataset.pv    ?? 0) : (td.dataset.pqty  ?? 0));
+              curRow.push(cur); prevRow.push(prev);
+              prevTotal += prev;
             } else {
-              // TotalCash / TotalQty / Stock
-              const v = td.dataset.sv !== undefined ? td.dataset.sv : td.textContent.replace(/,/g,'').trim();
-              out.push(v !== '' && !isNaN(v) ? Number(v) : v);
+              // Total column or Stock
+              const v   = td.dataset.sv !== undefined ? td.dataset.sv : td.textContent.replace(/,/g,'').trim();
+              const num = v !== '' && !isNaN(v) ? Number(v) : v;
+              curRow.push(num);
+              // Stock (n-1): same for both years; Total column: computed prior sum
+              prevRow.push(i === n-1 ? num : prevTotal);
             }
           }
+          rows.push(curRow);
+          rows.push(prevRow);
         } else {
+          const out = [];
           cells.forEach((td, i) => {
             if (mode === 'cash' && i === n-1) return;
             if (mode === 'qty'  && i === n-2) return;
@@ -2029,8 +2040,8 @@ function _extractFlatSplitRows(sectionData) {
               out.push(v !== '' && !isNaN(v) ? Number(v) : v);
             }
           });
+          rows.push([id, name, ...out]);
         }
-        rows.push([id, name, ...out]);
       });
     });
     return rows;
