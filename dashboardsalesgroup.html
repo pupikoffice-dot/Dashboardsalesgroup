@@ -747,6 +747,12 @@ function _loadData(data) {
     if (!S.wmsStock[r.company]) S.wmsStock[r.company] = {};
     S.wmsStock[r.company][r.itemSKU] = (S.wmsStock[r.company][r.itemSKU] || 0) + r.qtyInStock;
   });
+  S.itemCost = {};
+  (data.costRows || []).forEach(r => {
+    if (!r.itemSKU) return;
+    if (!S.itemCost[r.company]) S.itemCost[r.company] = {};
+    S.itemCost[r.company][r.itemSKU] = r.cost;
+  });
   document.getElementById('dataBadge').innerHTML = `Loaded: <b>${S.raw.length.toLocaleString()}</b> rows`;
   showMain(`<div class="welcome"><div class="ic">✅</div>
     <h2>Data loaded — ${S.raw.length.toLocaleString()} rows</h2>
@@ -1215,6 +1221,7 @@ function renderStockView() {
       });
       const lastMoLabel = lastM ? `${MN[lastM-1]} ${lastY}` : 'N/A';
       let h = `<div class="sbar"><span>Company: <b>${coName(S.co)}</b></span><span>View: <b>Stock</b></span><span>Last Month: <b>${lastMoLabel}</b></span><div class="sbar-actions"></div></div>`;
+      const costData = (S.itemCost && S.itemCost[S.co]) || {};
       h += `<div class="tw"><table><thead><tr>
         <th class="sortable" style="text-align:left">SKU<span class="si"> ↕</span></th>
         <th class="sortable" style="text-align:left">Item Name<span class="si"> ↕</span></th>
@@ -1222,11 +1229,15 @@ function renderStockView() {
         <th class="sortable" style="color:var(--acc2)">WMS Stock<span class="si"> ↕</span></th>
         <th class="sortable">Open Orders Qty<span class="si"> ↕</span></th>
         <th class="sortable">Available<span class="si"> ↕</span></th>
+        <th class="sortable">Cost<span class="si"> ↕</span></th>
+        <th class="sortable">Total Cost<span class="si"> ↕</span></th>
       </tr></thead><tbody>`;
       Object.entries(skus).sort((a,b)=>a[1].name.localeCompare(b[1].name)).forEach(([sku,it])=>{
         const wq=wmsData[sku]??null;
         const avail=wq!=null?wq-it.ooQty:null;
         const aStyle=avail!=null?(avail<0?'color:var(--red)':'color:var(--grn)'):'color:var(--muted)';
+        const cost=costData[sku]??null;
+        const totalCost=cost!=null&&wq!=null?cost*wq:null;
         h+=`<tr>
           <td>${esc(sku)}</td>
           <td title="${esc(it.name)}">${it.name}</td>
@@ -1234,6 +1245,8 @@ function renderStockView() {
           <td data-sv="${wq??-1}" style="color:var(--acc2)">${wq!=null?fmt0(wq):'—'}</td>
           <td data-sv="${it.ooQty}">${fmt0(it.ooQty)}</td>
           <td data-sv="${avail??-99999}" style="${aStyle}">${avail!=null?fmt0(avail):'—'}</td>
+          <td data-sv="${cost??''}">${cost!=null?fmt2(cost):'—'}</td>
+          <td data-sv="${totalCost??''}">${totalCost!=null?fmt0(totalCost):'—'}</td>
         </tr>`;
       });
       h += `</tbody></table></div>`;
@@ -1758,6 +1771,8 @@ function buildSbar({company,view,period,count,rows}){
 function fmt(n){ if(n==null||n==='')return'—'; return Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
 // fmt0 for month cells — shows 0 explicitly so empty months are visible
 function fmt0(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+// fmt2 for cost — 2 decimal places
+function fmt2(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 function showMain(html){ document.getElementById('main').innerHTML=html; }
 function on(id){ const e=document.getElementById(id);if(e)e.classList.remove('disabled'); }
