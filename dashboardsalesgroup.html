@@ -1258,8 +1258,15 @@ function renderStockView() {
         </tr>`;
       });
       h += `</tbody></table></div>`;
+      // Build chart entries: top 50 by total cost
+      const stockEntries = Object.entries(skus).map(([sku, it]) => {
+        const wq   = wmsData[sku] ?? 0;
+        const cost = costData[sku] ?? 0;
+        return { label: it.name, sku, value: wq * cost, qty: wq, ooQty: it.ooQty };
+      }).filter(e => e.value > 0);
       showMain(h);
       injectDlButtons();
+      attachPieButton(stockEntries, `Top Items by Total Cost — ${coName(S.co)}`, { modalFn: _showStockPieModal });
     } catch(e) { showMain(`<div class="err">Render error: ${e.message}</div>`); console.error(e); }
   }, 30);
 }
@@ -2216,8 +2223,8 @@ function buildItemPie(rows) {
 let _lastPie = null;
 let _pieModalChart = null;
 
-function attachPieButton(entries, chartTitle) {
-  _lastPie = { entries, chartTitle };
+function attachPieButton(entries, chartTitle, opts) {
+  _lastPie = { entries, chartTitle, modalFn: (opts && opts.modalFn) || _showPieModal };
   const actions = document.querySelector('#main .sbar-actions');
   if (!actions || actions.querySelector('.sbar-chart-btn')) return;
   const btn = document.createElement('button');
@@ -2419,7 +2426,71 @@ function _showBarModal(months, cashVals, qtyVals, title) {
 // ── Open modal (top-of-page button) ──────────────────────────
 function openPieModal() {
   if (!_lastPie) return;
-  _showPieModal(_lastPie.entries, _lastPie.chartTitle);
+  (_lastPie.modalFn || _showPieModal)(_lastPie.entries, _lastPie.chartTitle);
+}
+
+// ── Stock modal: top 50 by total cost, with WMS Stock + Open Orders ──────
+function _showStockPieModal(entries, chartTitle) {
+  const TOP = 50;
+  const data   = entries.filter(e => e.value > 0).sort((a, b) => b.value - a.value);
+  if (!data.length) return;
+  const sliced = data.slice(0, TOP);
+
+  const total    = sliced.reduce((s, e) => s + e.value,        0);
+  const totalQty = sliced.reduce((s, e) => s + (e.qty   || 0), 0);
+  const totalOO  = sliced.reduce((s, e) => s + (e.ooQty || 0), 0);
+
+  document.getElementById('pieModalTitle').textContent = chartTitle;
+  document.getElementById('pieModalSub').textContent   =
+    data.length > TOP ? `Top ${TOP} of ${data.length}` : `${data.length} item${data.length === 1 ? '' : 's'}`;
+  document.getElementById('pieModalTotal').textContent = fmt(total);
+
+  const pieTable = document.querySelector('#pieModal .pie-tbl');
+  pieTable.querySelector('thead tr').innerHTML =
+    '<th>#</th><th>SKU</th><th>Name</th>' +
+    '<th style="text-align:right">Total Cost</th>' +
+    '<th style="text-align:right;color:var(--acc2)">WMS Stock</th>' +
+    '<th style="text-align:right">Open Orders</th>' +
+    '<th style="text-align:right">Share</th>';
+  pieTable.querySelector('tfoot tr').innerHTML =
+    `<td colspan="3">Total</td>` +
+    `<td style="text-align:right">${fmt(total)}</td>` +
+    `<td style="text-align:right;color:var(--acc2)">${fmt0(totalQty)}</td>` +
+    `<td style="text-align:right;color:var(--muted)">${fmt0(totalOO)}</td>` +
+    `<td style="text-align:right;color:var(--acc)">100%</td>`;
+
+  const tbody = document.getElementById('pieModalTbody');
+  tbody.innerHTML = sliced.map((e, i) => {
+    const pct = total > 0 ? ((e.value / total) * 100).toFixed(1) : '0.0';
+    return `<tr>
+      <td>${i + 1}</td>
+      <td style="color:var(--muted);font-size:.72rem;white-space:nowrap">${esc(e.sku || '—')}</td>
+      <td><span class="pie-dot-sm" style="background:${PIE_COLORS[i % PIE_COLORS.length]}"></span>${esc(e.label)}</td>
+      <td style="text-align:right">${fmt(e.value)}</td>
+      <td style="text-align:right;color:var(--acc2)">${fmt0(e.qty || 0)}</td>
+      <td style="text-align:right;color:var(--muted)">${fmt0(e.ooQty || 0)}</td>
+      <td style="text-align:right;color:var(--acc);font-weight:700">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('pieModal').style.display = 'flex';
+  if (_pieModalChart) { _pieModalChart.destroy(); _pieModalChart = null; }
+
+  const ctx = document.getElementById('pieModalCanvas').getContext('2d');
+  _pieModalChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: sliced.map(e => e.label),
+      datasets: [{ data: sliced.map(e => e.value), backgroundColor: PIE_COLORS.slice(0, sliced.length), borderColor: '#1a1d27', borderWidth: 1 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `  ${fmt(ctx.raw)}` } }
+      }
+    }
+  });
 }
 
 // ── Core modal renderer ───────────────────────────────────────
