@@ -1230,7 +1230,7 @@ function renderStockView() {
         totalStockCost += wq * cost;
       });
       let h = `<div class="sbar"><span>Company: <b>${coName(S.co)}</b></span><span>View: <b>Stock</b></span><span>Last Month: <b>${lastMoLabel}</b></span><span>Total Qty: <b style="color:var(--acc2)">${fmt0(totalWmsQty)}</b></span><span>Total Cost: <b style="color:var(--acc)">${fmt0(totalStockCost)}</b></span><div class="sbar-actions"></div></div>`;
-      h += `<div class="tw"><table><thead><tr>
+      h += `<div class="tw tw-sticky"><table><thead><tr>
         <th class="sortable" style="text-align:left">SKU<span class="si"> ↕</span></th>
         <th class="sortable" style="text-align:left">Item Name<span class="si"> ↕</span></th>
         <th class="sortable">Last Mo. Qty<span class="si"> ↕</span></th>
@@ -1242,6 +1242,7 @@ function renderStockView() {
       </tr></thead><tbody>`;
       Object.entries(skus).sort((a,b)=>a[1].name.localeCompare(b[1].name)).forEach(([sku,it])=>{
         const wq=wmsData[sku]??null;
+        if (!wq) return;
         const avail=wq!=null?wq-it.ooQty:null;
         const aStyle=avail!=null?(avail<0?'color:var(--red)':'color:var(--grn)'):'color:var(--muted)';
         const cost=costData[sku]??null;
@@ -1265,6 +1266,7 @@ function renderStockView() {
         return { label: it.name, sku, value: wq * cost, qty: wq, ooQty: it.ooQty };
       }).filter(e => e.value > 0);
       showMain(h);
+      makeStickyHeaders();
       injectDlButtons();
       attachPieButton(stockEntries, `Top Items by Total Cost — ${coName(S.co)}`, { modalFn: _showStockPieModal });
     } catch(e) { showMain(`<div class="err">Render error: ${e.message}</div>`); console.error(e); }
@@ -1676,7 +1678,7 @@ function makeStickyHeaders() {
   if (window._stickyHandler) { window.removeEventListener('scroll', window._stickyHandler); delete window._stickyHandler; }
   if (window._stickyCleanup) { window._stickyCleanup.forEach(fn => fn()); delete window._stickyCleanup; }
   document.querySelectorAll('.sticky-thead-clone').forEach(e => e.remove());
-  const tables = [...document.querySelectorAll('#main .tw-months table')];
+  const tables = [...document.querySelectorAll('#main .tw-months table, #main .tw-sticky table')];
   if (!tables.length) return;
   // Calculate stable offset: main header height + results sbar height
   // Using offsetHeight (not getBoundingClientRect) avoids stale-element issues
