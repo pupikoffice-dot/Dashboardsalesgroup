@@ -1909,8 +1909,8 @@ function attachSKUFilter() {           // called from injectDlButtons — keep n
     const skuIdx   = find(/^sku\b/i);
     const nameIdx  = find(/^item\s*name/i);
     const priceIdx = find(/^price\b/i);
-    if (skuIdx   !== -1) _attachColFilter(table, ths[skuIdx],   skuIdx,   'in');
-    if (nameIdx  !== -1) _attachColFilter(table, ths[nameIdx],  nameIdx,  'in');
+    if (skuIdx   !== -1) _attachColFilter(table, ths[skuIdx],   skuIdx,   'in-out');
+    if (nameIdx  !== -1) _attachColFilter(table, ths[nameIdx],  nameIdx,  'in-out');
     if (priceIdx !== -1) _attachColFilter(table, ths[priceIdx], priceIdx, 'in-out');
   });
 }
