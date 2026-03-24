@@ -769,6 +769,12 @@ function _loadData(data) {
     if (!S.itemCost[r.company]) S.itemCost[r.company] = {};
     S.itemCost[r.company][r.itemSKU] = r.cost;
   });
+  S.itemPrice = {};
+  (data.priceRows || []).forEach(r => {
+    if (!r.itemSKU) return;
+    if (!S.itemPrice[r.company]) S.itemPrice[r.company] = {};
+    S.itemPrice[r.company][r.itemSKU] = r.price;
+  });
   document.getElementById('dataBadge').innerHTML = `Loaded: <b>${S.raw.length.toLocaleString()}</b> rows`;
   showMain(`<div class="welcome"><div class="ic">✅</div>
     <h2>Data loaded — ${S.raw.length.toLocaleString()} rows</h2>
@@ -1237,7 +1243,8 @@ function renderStockView() {
         if (!skus[sku]) skus[sku]={name:wmsNames[sku]||sku,lastMoQty:0,ooQty:0};
       });
       const lastMoLabel = lastM ? `${MN[lastM-1]} ${lastY}` : 'N/A';
-      const costData = (S.itemCost && S.itemCost[S.co]) || {};
+      const costData  = (S.itemCost  && S.itemCost[S.co])  || {};
+      const priceData = (S.itemPrice && S.itemPrice[S.co]) || {};
       // Compute totals for sbar
       let totalWmsQty = 0, totalStockCost = 0;
       Object.keys(skus).forEach(sku => {
@@ -1252,6 +1259,7 @@ function renderStockView() {
         <th class="sortable" style="text-align:left">Item Name<span class="si"> ↕</span></th>
         <th class="sortable">Last Mo. Qty<span class="si"> ↕</span></th>
         <th class="sortable" style="color:var(--acc2)">WMS Stock<span class="si"> ↕</span></th>
+        <th class="sortable">Price<span class="si"> ↕</span></th>
         <th class="sortable">Open Orders Qty<span class="si"> ↕</span></th>
         <th class="sortable">Available<span class="si"> ↕</span></th>
         <th class="sortable">Cost<span class="si"> ↕</span></th>
@@ -1264,6 +1272,7 @@ function renderStockView() {
         const avail=wq!=null?wq-it.ooQty:null;
         const aStyle=avail!=null?(avail<0?'color:var(--red)':'color:var(--grn)'):'color:var(--muted)';
         const cost=costData[sku]??null;
+        const price=priceData[sku]??null;
         const totalCost=cost!=null&&wq!=null?cost*wq:null;
         tLMQ+=it.lastMoQty; tWMS+=wq; tOO+=it.ooQty; tAvail+=(avail??0); tTotalCost+=(totalCost??0);
         h+=`<tr>
@@ -1271,6 +1280,7 @@ function renderStockView() {
           <td title="${esc(it.name)}">${it.name}</td>
           <td data-sv="${it.lastMoQty}">${fmt0(it.lastMoQty)}</td>
           <td data-sv="${wq??-1}" style="color:var(--acc2)">${wq!=null?fmt0(wq):'—'}</td>
+          <td>${price!=null?fmt2(price):'—'}</td>
           <td data-sv="${it.ooQty}">${fmt0(it.ooQty)}</td>
           <td data-sv="${avail??-99999}" style="${aStyle}">${avail!=null?fmt0(avail):'—'}</td>
           <td data-sv="${cost??''}">${cost!=null?fmt2(cost):'—'}</td>
@@ -1282,6 +1292,7 @@ function renderStockView() {
         <td>—</td><td>Total</td>
         <td data-sv="${tLMQ}">${fmt0(tLMQ)}</td>
         <td data-sv="${tWMS}" style="color:var(--acc2)">${fmt0(tWMS)}</td>
+        <td>—</td>
         <td data-sv="${tOO}">${fmt0(tOO)}</td>
         <td data-sv="${tAvail}" style="${tAvailStyle}">${fmt0(tAvail)}</td>
         <td>—</td>
@@ -1878,31 +1889,74 @@ function injectDlButtons() {
   attachSKUFilter();
 }
 
-// ══ SKU column inline filter ══════════════════════════════════
-function attachSKUFilter() {
+// ══ Column inline filters (SKU, Item Name, Price) ═════════════
+function attachSKUFilter() {           // called from injectDlButtons — keep name
   document.querySelectorAll('#main table').forEach(table => {
-    if (table._skuFilter) return;
+    if (table._colFilters) return;
+    table._colFilters = true;
     const ths = [...table.querySelectorAll('thead th')];
-    const skuIdx = ths.findIndex(th => /^sku\b/i.test(th.textContent.trim()));
-    if (skuIdx === -1) return;
-    table._skuFilter = true;
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.className = 'sku-col-filter';
-    inp.placeholder = '▾ filter…';
-    inp.addEventListener('click', e => e.stopPropagation());
-    inp.addEventListener('input', () => _filterBySKU(table, skuIdx, inp.value.trim().toLowerCase()));
-    ths[skuIdx].appendChild(inp);
+    const find = pat => ths.findIndex(th => pat.test(th.textContent.trim()));
+    const skuIdx   = find(/^sku\b/i);
+    const nameIdx  = find(/^item\s*name/i);
+    const priceIdx = find(/^price\b/i);
+    if (skuIdx   !== -1) _attachColFilter(table, ths[skuIdx],   skuIdx,   'in');
+    if (nameIdx  !== -1) _attachColFilter(table, ths[nameIdx],  nameIdx,  'in');
+    if (priceIdx !== -1) _attachColFilter(table, ths[priceIdx], priceIdx, 'in-out');
   });
 }
-function _filterBySKU(table, skuIdx, q) {
+function _attachColFilter(table, th, colIdx, modes) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:2px;margin-top:3px;align-items:center';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'col-filter';
+  inp.placeholder = '▾ filter…';
+  inp.dataset.colIdx = colIdx;
+  inp.style.cssText = 'flex:1;min-width:0;padding:2px 4px;font-size:.7rem;border-radius:3px;border:1px solid var(--bdr);background:var(--bg2);color:var(--fg)';
+  inp.addEventListener('click', e => e.stopPropagation());
+  inp.addEventListener('input', () => _applyTableFilters(table));
+  wrap.appendChild(inp);
+  if (modes === 'in-out') {
+    const btn = document.createElement('button');
+    btn.className = 'col-filter-mode';
+    btn.textContent = 'IN';
+    btn.dataset.mode = 'in';
+    btn.title = 'Toggle: show matching / hide matching';
+    btn.style.cssText = 'font-size:.6rem;padding:1px 5px;border-radius:3px;border:1px solid var(--bdr);background:var(--acc);color:#fff;cursor:pointer;white-space:nowrap;line-height:1.4';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const nowIn = btn.dataset.mode === 'in';
+      btn.dataset.mode = nowIn ? 'out' : 'in';
+      btn.textContent  = nowIn ? 'OUT' : 'IN';
+      btn.style.background = nowIn ? 'var(--red,#c0392b)' : 'var(--acc)';
+      _applyTableFilters(table);
+    });
+    inp._modeBtn = btn;
+    wrap.appendChild(btn);
+  }
+  th.appendChild(wrap);
+}
+function _applyTableFilters(table) {
   const tbody = table.querySelector('tbody');
   if (!tbody) return;
+  // Collect active filters
+  const filters = [...table.querySelectorAll('thead .col-filter')].map(inp => {
+    const q = inp.value.trim().toLowerCase();
+    const mode = inp._modeBtn ? inp._modeBtn.dataset.mode : 'in';
+    return { ci: Number(inp.dataset.colIdx), q, mode };
+  }).filter(f => f.q !== '');
+  // Show/hide rows
   tbody.querySelectorAll('tr').forEach(tr => {
-    const cell = tr.querySelectorAll('td')[skuIdx];
-    const text = (cell?.textContent || '').toLowerCase();
-    tr.style.display = (!q || text.includes(q)) ? '' : 'none';
+    const cells = [...tr.querySelectorAll('td')];
+    let vis = true;
+    for (const f of filters) {
+      const txt = (cells[f.ci]?.textContent || '').toLowerCase();
+      if (f.mode === 'in'  && !txt.includes(f.q)) { vis = false; break; }
+      if (f.mode === 'out' &&  txt.includes(f.q)) { vis = false; break; }
+    }
+    tr.style.display = vis ? '' : 'none';
   });
+  // Update tfoot totals
   const footRow = table.querySelector('tfoot tr');
   if (!footRow) return;
   const footCells = [...footRow.querySelectorAll('td')];
@@ -1917,7 +1971,8 @@ function _filterBySKU(table, skuIdx, q) {
       return (isFinite(n) && sv !== '-99999' && sv !== '-1') ? n : null;
     }).filter(v => v !== null);
     if (!vals.length) return;
-    fc.textContent = fmt(vals.reduce((a, b) => a + b, 0));
+    const sum = vals.reduce((a, b) => a + b, 0);
+    fc.textContent = Number.isInteger(sum) ? fmt0(sum) : fmt2(sum);
   });
 }
 
