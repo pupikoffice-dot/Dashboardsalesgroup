@@ -1962,8 +1962,8 @@ function _applyTableFilters(table) {
     for (const f of filters) {
       const txt = (cells[f.ci]?.textContent || '').toLowerCase();
       const terms = f.q.split('&').map(t => t.trim()).filter(t => t);
-      if (f.mode === 'in'  && !terms.every(t => txt.includes(t))) { vis = false; break; }
-      if (f.mode === 'out' &&  terms.some(t  => txt.includes(t))) { vis = false; break; }
+      if (f.mode === 'in'  && !terms.some(t => txt.includes(t))) { vis = false; break; }
+      if (f.mode === 'out' &&  terms.some(t => txt.includes(t))) { vis = false; break; }
     }
     tr.style.display = vis ? '' : 'none';
   });
