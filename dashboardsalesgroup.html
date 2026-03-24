@@ -1961,8 +1961,9 @@ function _applyTableFilters(table) {
     let vis = true;
     for (const f of filters) {
       const txt = (cells[f.ci]?.textContent || '').toLowerCase();
-      if (f.mode === 'in'  && !txt.includes(f.q)) { vis = false; break; }
-      if (f.mode === 'out' &&  txt.includes(f.q)) { vis = false; break; }
+      const terms = f.q.split('&').map(t => t.trim()).filter(t => t);
+      if (f.mode === 'in'  && !terms.every(t => txt.includes(t))) { vis = false; break; }
+      if (f.mode === 'out' &&  terms.some(t  => txt.includes(t))) { vis = false; break; }
     }
     tr.style.display = vis ? '' : 'none';
   });
