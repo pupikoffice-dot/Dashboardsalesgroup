@@ -1826,10 +1826,19 @@ function buildSbar({company,view,period,count,rows}){
     }
   }
   const totals = sumRows(rows || []);
+  let lastOrderSpan = '';
+  if (S.dateMode === 'openorders' && rows && rows.length) {
+    const lastDate = rows.reduce((mx, r) => (r.date && r.date > mx ? r.date : mx), '');
+    if (lastDate) {
+      const [y, mo, d] = lastDate.split('-');
+      lastOrderSpan = `<span>Last Order: <b>${d}/${mo}/${y}</b></span>`;
+    }
+  }
   return `${warn}<div class="sbar">
     <span>Company: <b>${company}</b></span>
     <span>View: <b>${view}</b></span>
     <span>Period: <b>${period}</b></span>
+    ${lastOrderSpan}
     <span>Records: <b>${count}</b></span>
     <span>Cash: <b>${fmt(totals.cash)}</b></span>
     <span>Qty: <b>${fmt(totals.qty)}</b></span>
