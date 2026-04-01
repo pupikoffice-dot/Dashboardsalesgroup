@@ -786,6 +786,7 @@ function _loadData(data) {
 function wmsCoKey(co) {
   if (co === 'openorders') return 'pupik';
   if (co === 'openorders-mt') return 'mt';
+  if (co === 'openorders-grow') return 'grow';
   return co;
 }
 
@@ -1222,7 +1223,7 @@ function renderStockView() {
         if (!m||!y) return;
         if (y>lastY||(y===lastY&&m>lastM)){lastY=y;lastM=m;}
       });
-      const ooCo = S.co==='mt' ? 'openorders-mt' : 'openorders';
+      const ooCo = S.co==='mt' ? 'openorders-mt' : S.co==='grow' ? 'openorders-grow' : 'openorders';
       const wmsData = (S.wmsStock && S.wmsStock[S.co]) || {};
       const skus = {};
       // From sales data
@@ -1800,7 +1801,9 @@ function coName(co){ return co==='pupik'?'Pupik':co==='mt'?'Monkeytime':co==='gr
 // In other modes: returns S.co directly
 function effCo() {
   if (S.dateMode !== 'openorders') return S.co;
-  return S.co === 'mt' ? 'openorders-mt' : 'openorders';
+  if (S.co === 'mt')   return 'openorders-mt';
+  if (S.co === 'grow') return 'openorders-grow';
+  return 'openorders';
 }
 function buildSbar({company,view,period,count,rows}){
   let warn = '';
