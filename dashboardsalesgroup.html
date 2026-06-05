@@ -1090,7 +1090,11 @@ function _normalizeDebtRows(raw) {
 }
 
 function _debtRowsForCo(co) {
-  return (S.debtRows || []).filter(r => r.company === co);
+  return (S.debtRows || []).filter(r =>
+    r.company === co &&
+    r.agent !== '*' &&
+    Number(r.clientID) > 0
+  );
 }
 
 function _debtMonths(months) {
