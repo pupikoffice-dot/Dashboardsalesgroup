@@ -870,6 +870,24 @@ const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','D
 // ══ Load JSON ════════════════════════════════════════════════
 // Skip Hebrew-only SKUs (e.g. "סך הכל" total rows from WMS files)
 function _isWmsTotalRow(sku) { return /^[\u0590-\u05FF\s]+$/.test(sku); }
+function _normalizeDebtRows(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(r => ({
+    company: String(r.company || '').toLowerCase(),
+    agent: r.agent || '',
+    clientID: r.clientID || '',
+    clientName: r.clientName || '',
+    oldDebt: Number(r.oldDebt) || 0,
+    months: Array.isArray(r.months)
+      ? r.months.map(m => ({ label: m.label || '', amount: Number(m.amount) || 0 }))
+      : [],
+  }));
+}
+
+function _debtRowsForCo(co) {
+  return (S.debtRows || []).filter(r => r.company === co);
+}
+
 function _loadData(data) {
   S.raw = data.rows || data;
   S.wmsStock = {};
@@ -895,8 +913,14 @@ function _loadData(data) {
     if (!S.itemPrice[r.company]) S.itemPrice[r.company] = {};
     S.itemPrice[r.company][r.itemSKU] = r.price;
   });
-  S.debtRows = data.debtRows || [];
-  document.getElementById('dataBadge').innerHTML = `Loaded: <b>${S.raw.length.toLocaleString()}</b> rows`;
+  let debtSrc = data.debtRows;
+  if ((!debtSrc || !debtSrc.length) && window.__DASHBOARD_DATA__?.debtRows?.length)
+    debtSrc = window.__DASHBOARD_DATA__.debtRows;
+  S.debtRows = _normalizeDebtRows(debtSrc);
+  const debtN = S.debtRows.length;
+  document.getElementById('dataBadge').innerHTML =
+    `Loaded: <b>${S.raw.length.toLocaleString()}</b> rows` +
+    (debtN ? ` · <b>${debtN}</b> debt clients` : ' · <span style="color:var(--red)">0 debt rows</span>');
   showMain(`<div class="welcome"><div class="ic">✅</div>
     <h2>Data loaded — ${S.raw.length.toLocaleString()} rows</h2>
     <p>Generated: ${data.generated||'unknown'}<br/>Select a company on the left to begin.</p></div>`);
@@ -3073,10 +3097,16 @@ function showOversite() {
     <div class="ov-sub">Today: <b>${todayDisp}</b> &nbsp;·&nbsp; Month: <b>${monthLbl}</b></div>
   </div><div class="ov-grid">`;
 
+  const monthStart = `${curYear}-${String(curMonth).padStart(2, '0')}-01`;
+
   cols.forEach(({ co, ooCo, retCo, label, color }) => {
     const ordersToday = S.raw.filter(r => r.company === ooCo && r.date === todayStr);
     const { cash: otCash, qty: otQty } = sumRows(ordersToday);
     const otClients = new Set(ordersToday.map(r => r.clientID).filter(Boolean)).size;
+
+    const ordersMTD = S.raw.filter(r => r.company === ooCo && r.date >= monthStart && r.date <= todayStr);
+    const { cash: omCash, qty: omQty } = sumRows(ordersMTD);
+    const omClients = new Set(ordersMTD.map(r => r.clientID).filter(Boolean)).size;
 
     const salesMTD = S.raw.filter(r => r.company === co && Number(r.year) === curYear && Number(r.month) === curMonth);
     const { cash: smCash, qty: smQty } = sumRows(salesMTD);
@@ -3093,7 +3123,7 @@ function showOversite() {
     });
     const top10 = Object.entries(itemMap).sort((a, b) => b[1].cash - a[1].cash).slice(0, 10);
 
-    const debtData = (S.debtRows || []).filter(r => r.company === co);
+    const debtData = _debtRowsForCo(co);
 
     // ── Top 10 table ──
     let top10Html = top10.length
@@ -3134,7 +3164,7 @@ function showOversite() {
         <button class="ov-debt-btn" onclick="openDebtModal('${co}')">📋 Full Report</button>
       </div>`;
     } else {
-      debtHtml = '<div class="ov-empty">No debt data</div>';
+      debtHtml = '<div class="ov-empty">No debt in loaded data — <code>debtRows</code> is empty in data.json. Re-run the Excel export with the updated ExportDashboardData.bas (Debtpupik / Debtmt sheets).</div>';
     }
 
     html += `<div class="ov-col">
@@ -3146,6 +3176,15 @@ function showOversite() {
           <div class="ov-kpi"><div class="ov-kpi-val">${otClients}</div><div class="ov-kpi-lbl">Clients</div></div>
           <div class="ov-kpi"><div class="ov-kpi-val">${fmt(otQty)}</div><div class="ov-kpi-lbl">Qty</div></div>
           <div class="ov-kpi"><div class="ov-kpi-val" style="color:var(--grn)">${fmt(otCash)}</div><div class="ov-kpi-lbl">Cash</div></div>
+        </div>
+      </div>
+
+      <div class="ov-section">
+        <div class="ov-section-title">📋 Orders MTD — ${monthLbl}</div>
+        <div class="ov-kpi-row">
+          <div class="ov-kpi"><div class="ov-kpi-val">${omClients}</div><div class="ov-kpi-lbl">Clients</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-val">${fmt(omQty)}</div><div class="ov-kpi-lbl">Qty</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-val" style="color:var(--grn)">${fmt(omCash)}</div><div class="ov-kpi-lbl">Cash</div></div>
         </div>
       </div>
 
@@ -3183,7 +3222,7 @@ function showOversite() {
 
 // ── Debt modal ────────────────────────────────────────────────
 function openDebtModal(co) {
-  const debtData = (S.debtRows || []).filter(r => r.company === co);
+  const debtData = _debtRowsForCo(co);
   if (!debtData.length) return;
   const mLabels = (debtData[0].months || []).map(m => m.label);
   const coLabel = co === 'pupik' ? 'Pupik' : 'Monkeytime';
