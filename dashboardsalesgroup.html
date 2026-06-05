@@ -1132,6 +1132,7 @@ function _loadData(data) {
     if (!S.itemPrice[r.company]) S.itemPrice[r.company] = {};
     S.itemPrice[r.company][r.itemSKU] = r.price;
   });
+  S.debtLastUpdate = data.debtLastUpdate || '';
   let debtSrc = data.debtRows;
   if ((!debtSrc || !debtSrc.length) && window.__DASHBOARD_DATA__?.debtRows?.length)
     debtSrc = window.__DASHBOARD_DATA__.debtRows;
@@ -3548,8 +3549,9 @@ function openDebtModal(co) {
     totM.map(v => `<td class="cr">${fmt(v)}</td>`).join('') +
     `<td class="cr" style="font-weight:700">${fmt(totGrand)}</td></tr></tfoot>`;
 
+  const _dlu = S.debtLastUpdate ? `  · Last Update: ${S.debtLastUpdate}` : '';
   document.getElementById('debtModalTitle').textContent =
-    `💳 Open Debt — ${coLabel} (Total ≥ ${_DEBT_REPORT_MIN_TOTAL})`;
+    `💳 Open Debt — ${coLabel} (Total ≥ ${_DEBT_REPORT_MIN_TOTAL})${_dlu}`;
   document.getElementById('debtModalTable').innerHTML = html;
   document.getElementById('debtModal').style.display = 'flex';
 }
