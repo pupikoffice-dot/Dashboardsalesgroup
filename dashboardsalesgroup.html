@@ -818,6 +818,26 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
 }
 .section-sum b { color: var(--txt); }
 .section.collapsed .section-sum { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* ── Oversite sidebar button ── */
+.oversite-sidebar-btn {
+  display: block;
+  width: 100%;
+  background: var(--acc);
+  border: none;
+  color: #fff;
+  border-radius: var(--r-full);
+  padding: 8px 14px;
+  font-size: .82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: .01em;
+  transition: opacity .15s, box-shadow .15s;
+  box-shadow: 0 4px 14px rgba(129,140,248,.25);
+}
+.oversite-sidebar-btn:hover { opacity: .88; box-shadow: 0 6px 20px rgba(129,140,248,.35); }
 </style>
 </head>
 <body>
@@ -831,7 +851,6 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
   <div class="hdr-right">
     <div class="data-badge" id="dataBadge">No data loaded</div>
     <button class="refresh-btn" onclick="refreshData()" title="Reload data_loader.js / data.json from disk">↺ Refresh</button>
-    <button class="refresh-btn oversite-btn" onclick="showOversite()" id="oversiteBtn" title="Oversite Dashboard">Oversite</button>
   </div>
 </header>
 
@@ -851,6 +870,8 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
       <button class="btn" id="bMT"    onclick="selCo('mt')">🐒 Monkeytime</button>
       <button class="btn" id="bGrow"  onclick="selCo('grow')">🌱 Grow</button>
     </div>
+    <div style="height:1px;background:var(--bdr);margin:10px 0"></div>
+    <button class="oversite-sidebar-btn" onclick="showOversite()" id="oversiteBtn">🏠 Oversite</button>
   </div>
 
   <!-- ② Date -->
