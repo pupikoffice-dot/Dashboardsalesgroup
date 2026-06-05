@@ -888,6 +888,14 @@ function _debtRowsForCo(co) {
   return (S.debtRows || []).filter(r => r.company === co);
 }
 
+function _debtMonths(months) {
+  return (months || []).filter(m => !/יתרה\s*מצטברת/i.test(m.label || ''));
+}
+
+function _debtRowTotal(r) {
+  return (r.oldDebt || 0) + _debtMonths(r.months).reduce((s, m) => s + (m.amount || 0), 0);
+}
+
 function _loadData(data) {
   S.raw = data.rows || data;
   S.wmsStock = {};
@@ -3146,7 +3154,7 @@ function showOversite() {
       let totOld = 0;
       debtData.forEach(r => {
         totOld += r.oldDebt || 0;
-        (r.months || []).forEach(m => {
+        _debtMonths(r.months).forEach(m => {
           if (!m.label) return;
           mTotals[m.label] = (mTotals[m.label] || 0) + (m.amount || 0);
         });
@@ -3224,7 +3232,7 @@ function showOversite() {
 function openDebtModal(co) {
   const debtData = _debtRowsForCo(co);
   if (!debtData.length) return;
-  const mLabels = (debtData[0].months || []).map(m => m.label);
+  const mLabels = _debtMonths(debtData[0].months).map(m => m.label);
   const coLabel = co === 'pupik' ? 'Pupik' : 'Monkeytime';
 
   let html = `<thead><tr>
@@ -3237,14 +3245,15 @@ function openDebtModal(co) {
 
   let totOld = 0, totM = mLabels.map(() => 0), totGrand = 0;
   debtData.slice().sort((a, b) => (a.clientName || '').localeCompare(b.clientName || '')).forEach(r => {
-    const rowTot = (r.oldDebt || 0) + (r.months || []).reduce((s, m) => s + (m.amount || 0), 0);
+    const months = _debtMonths(r.months);
+    const rowTot = _debtRowTotal(r);
     totOld += r.oldDebt || 0; totGrand += rowTot;
     html += `<tr>
       <td>${esc(r.clientID || '')}</td>
       <td>${esc(r.clientName || '')}</td>
       <td>${esc(r.agent || '')}</td>
       <td class="cr">${fmt(r.oldDebt || 0)}</td>` +
-      (r.months || []).map((m, i) => {
+      months.map((m, i) => {
         totM[i] = (totM[i] || 0) + (m.amount || 0);
         return `<td class="cr">${fmt(m.amount || 0)}</td>`;
       }).join('') +
