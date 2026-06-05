@@ -515,6 +515,111 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
 /* ── Disabled panel overlay ── */
 .disabled { opacity: .35; pointer-events: none; }
 
+/* ── Bar chart toggle ── */
+.bar-tog {
+  background: var(--sur2);
+  border: 1px solid var(--bdr);
+  color: var(--muted);
+  border-radius: 5px;
+  padding: 2px 10px;
+  font-size: .74rem;
+  cursor: pointer;
+  transition: all .12s;
+}
+.bar-tog.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+.bar-tog-row { display: flex; gap: 5px; margin-left: 8px; }
+
+/* ── Oversite Dashboard ── */
+.ov-header { margin-bottom: 18px; }
+.ov-header h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+.ov-sub { font-size: .78rem; color: var(--muted); }
+.ov-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .ov-grid { grid-template-columns: 1fr; } }
+.ov-col { display: flex; flex-direction: column; gap: 14px; }
+.ov-col-hdr {
+  font-size: 1rem; font-weight: 700;
+  padding: 10px 14px;
+  background: var(--sur);
+  border-left: 4px solid var(--acc);
+  border-radius: 6px;
+  border: 1px solid var(--bdr);
+}
+.ov-section {
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 12px 14px;
+}
+.ov-section-title {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.ov-kpi-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.ov-kpi {
+  flex: 1; min-width: 80px;
+  background: var(--sur2);
+  border: 1px solid var(--bdr);
+  border-radius: 7px;
+  padding: 8px 12px;
+  text-align: center;
+}
+.ov-kpi-val { font-size: 1.1rem; font-weight: 700; color: var(--txt); }
+.ov-kpi-lbl { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+.ov-empty { color: var(--muted); font-size: .8rem; font-style: italic; }
+.ov-debt-summary { display: flex; flex-direction: column; gap: 5px; }
+.ov-debt-row { display: flex; justify-content: space-between; align-items: center; font-size: .82rem; }
+.ov-debt-lbl { color: var(--muted); }
+.ov-debt-val { font-weight: 600; }
+.ov-debt-btn {
+  margin-top: 10px;
+  background: var(--sur2);
+  border: 1px solid var(--bdr);
+  color: var(--acc);
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: .78rem;
+  cursor: pointer;
+  width: 100%;
+  transition: all .13s;
+}
+.ov-debt-btn:hover { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+/* ── Debt modal ── */
+.debt-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.68);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.debt-modal {
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: 14px;
+  width: min(1100px, 96vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+}
+.debt-modal-hdr {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bdr);
+  font-weight: 700;
+  font-size: .92rem;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.debt-modal-body { overflow: auto; padding: 16px; }
+
 /* ── Collapse toggle ── */
 .section-title {
   cursor: pointer;
@@ -556,6 +661,7 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
     <div class="sub">Pupik · Monkeytime · Grow</div>
   </div>
   <div class="hdr-right">
+    <button class="refresh-btn" onclick="showOversite()" id="oversiteBtn" title="Oversite Dashboard">🏠 Oversite</button>
     <button class="refresh-btn" onclick="refreshData()" title="Reload data_loader.js / data.json from disk">🔄 Refresh</button>
     <div class="data-badge" id="dataBadge">No data loaded</div>
   </div>
@@ -631,7 +737,7 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
     <input class="srch" type="text" id="clientSrch" placeholder="Search clients…" oninput="filterList('clientList', this.value)"/>
     <div class="mini-row">
       <button class="mini" onclick="setAll('clientList', true)">All</button>
-      <button class="mini" onclick="setAll('clientList', false)">None</button>
+      <button class="mini" onclick="clearAll('clientList')">Clear</button>
     </div>
     <div class="chk-list" id="clientList"></div>
   </div>
@@ -656,7 +762,7 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
          oninput="filterList('catList', this.value)" style="display:none"/>
     <div class="mini-row" id="catMiniRow" style="display:none">
       <button class="mini" onclick="setAll('catList',true);buildItemList()">All</button>
-      <button class="mini" onclick="setAll('catList',false);buildItemList()">None</button>
+      <button class="mini" onclick="clearAll('catList');buildItemList()">Clear</button>
     </div>
     <div class="chk-list" id="catList" style="max-height:140px"></div>
   </div>
@@ -666,7 +772,7 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
     <input class="srch" type="text" id="itemSrch" placeholder="Search items…" oninput="filterList('itemList', this.value)"/>
     <div class="mini-row">
       <button class="mini" onclick="setAll('itemList', true)">All</button>
-      <button class="mini" onclick="setAll('itemList', false)">None</button>
+      <button class="mini" onclick="clearAll('itemList')">Clear</button>
     </div>
     <div class="chk-list" id="itemList"></div>
   </div>
@@ -726,6 +832,20 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
   </div>
 </div>
 
+<!-- ══ DEBT MODAL ════════════════════════════════════════════ -->
+<div id="debtModal" class="debt-overlay" onclick="if(event.target===this)closeDebtModal()">
+  <div class="debt-modal">
+    <div class="debt-modal-hdr">
+      <span id="debtModalTitle">💳 Open Debt</span>
+      <button class="dl-btn" onclick="dlDebtModalCSV()" style="margin-left:auto;margin-right:6px">📥 Export CSV</button>
+      <button class="pie-close" onclick="closeDebtModal()">✕</button>
+    </div>
+    <div class="debt-modal-body">
+      <div class="tw"><table id="debtModalTable"></table></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="data_loader.js"></script>
 <script>
@@ -775,6 +895,7 @@ function _loadData(data) {
     if (!S.itemPrice[r.company]) S.itemPrice[r.company] = {};
     S.itemPrice[r.company][r.itemSKU] = r.price;
   });
+  S.debtRows = data.debtRows || [];
   document.getElementById('dataBadge').innerHTML = `Loaded: <b>${S.raw.length.toLocaleString()}</b> rows`;
   showMain(`<div class="welcome"><div class="ic">✅</div>
     <h2>Data loaded — ${S.raw.length.toLocaleString()} rows</h2>
@@ -1343,7 +1464,8 @@ function renderClients(coRows) {
       const { cash, qty } = sumRows(cl.rows);
       return { label: cl.name, value: cash, qty };
     }),
-    'Cash by Client'
+    'Cash by Client',
+    { rows }
   );
 }
 
@@ -1558,7 +1680,7 @@ function renderItems(coRows) {
     showMain(html);
     makeStickyHeaders();
     injectDlButtons();
-    attachPieButton(buildItemPie(rows), 'Cash by Item');
+    attachPieButton(buildItemPie(rows), 'Cash by Item', { rows });
   } else {
     const items = {};
     rows.forEach(r => {
@@ -1576,7 +1698,7 @@ function renderItems(coRows) {
     makeStickyHeaders();
     attachCollapse();
     injectDlButtons();
-    attachPieButton(buildItemPie(rows), 'Cash by Item');
+    attachPieButton(buildItemPie(rows), 'Cash by Item', { rows });
   }
 }
 
@@ -1695,7 +1817,15 @@ function filterList(listId, q) {
   });
 }
 function setAll(listId, v) {
-  document.querySelectorAll(`#${listId} input[type=checkbox]`).forEach(c => c.checked = v);
+  // "All" only affects visible (filtered) items; "false" call from catList still uses this
+  document.querySelectorAll(`#${listId} label.ck`).forEach(l => {
+    if (v && l.style.display === 'none') return;
+    const cb = l.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = v;
+  });
+}
+function clearAll(listId) {
+  document.querySelectorAll(`#${listId} input[type=checkbox]`).forEach(c => c.checked = false);
 }
 function sumRows(rows) {
   return {
@@ -2073,7 +2203,11 @@ function _isMetricCashQtyTable(table) {
 }
 
 function _wantsCashQtyXls(table) {
-  return _isMonthlyTable(table) || _isMetricCashQtyTable(table);
+  if (_isMonthlyTable(table) || _isMetricCashQtyTable(table)) return true;
+  const ths = [...table.querySelectorAll('thead th')];
+  const hasCash = ths.some(th => /^cash$/i.test(th.textContent.trim().replace(/[^\w]/g,'')));
+  const hasQty  = ths.some(th => /^qty$/i.test(th.textContent.trim().replace(/[^\w]/g,'')));
+  return hasCash && hasQty;
 }
 
 function _appendMetricCashQtyExportBlock(rows, mode, id, name, table, idx) {
@@ -2228,15 +2362,22 @@ function _extractFlatSplitRows(sectionData) {
         });
         rows.push(hdrRow);
       } else {
-        const cleanHdrs = ths.map(th => {
+        const thTexts = ths.map(th => {
           const c = th.cloneNode(true);
           c.querySelectorAll('.si').forEach(e => e.remove());
           return c.textContent.trim().replace(/\s+/g,' ').replace(/\s*\(cash\/qty\)/i,'').trim();
         });
-        const hdrs = mode === 'cash'
-          ? cleanHdrs.slice(0, n-1)
-          : [...cleanHdrs.slice(0, n-2), cleanHdrs[n-1]];
-        rows.push(['ID / SKU', 'Name', ...hdrs]);
+        const cashIdx = thTexts.findIndex(t => /^cash$/i.test(t.replace(/[^\w]/g,'')));
+        const qtyIdx  = thTexts.findIndex(t => /^qty$/i.test(t.replace(/[^\w]/g,'')));
+        const isStdFlat = cashIdx >= 0 && qtyIdx >= 0;
+        if (isStdFlat) {
+          const skipIdx = mode === 'cash' ? qtyIdx : cashIdx;
+          rows.push(['ID / SKU', 'Name', ...thTexts.filter((_, i) => i !== skipIdx)]);
+        } else {
+          // Legacy combined-cell monthly
+          const hdrs = mode === 'cash' ? thTexts.slice(0, n-1) : [...thTexts.slice(0, n-2), thTexts[n-1]];
+          rows.push(['ID / SKU', 'Name', ...hdrs]);
+        }
       }
 
       [...table.querySelectorAll('tbody tr, tfoot tr')].forEach(row => {
@@ -2268,24 +2409,40 @@ function _extractFlatSplitRows(sectionData) {
           rows.push(curRow);
           rows.push(prevRow);
         } else {
-          const out = [];
-          cells.forEach((td, i) => {
-            if (mode === 'cash' && i === n-1) return;
-            if (mode === 'qty'  && i === n-2) return;
-            if (i <= 1) {
-              const c = td.cloneNode(true);
-              c.querySelectorAll('.si,.cm').forEach(e => e.remove());
-              out.push(c.textContent.trim());
-            } else if (i >= 2 && i <= n-3) {
-              out.push(Number(mode === 'cash'
-                ? (td.dataset.cash ?? td.dataset.sv ?? 0)
-                : (td.dataset.qty  ?? 0)));
-            } else {
-              const v = td.dataset.sv !== undefined ? td.dataset.sv : td.textContent.replace(/,/g,'').trim();
-              out.push(v !== '' && !isNaN(v) ? Number(v) : v);
-            }
-          });
-          rows.push([id, name, ...out]);
+          // Detect std flat vs legacy combined for row extraction
+          const thTextsRow = ths.map(th => { const c=th.cloneNode(true); c.querySelectorAll('.si').forEach(e=>e.remove()); return c.textContent.trim().replace(/[^\w]/g,''); });
+          const cIdx = thTextsRow.findIndex(t => /^cash$/i.test(t));
+          const qIdx = thTextsRow.findIndex(t => /^qty$/i.test(t));
+          if (cIdx >= 0 && qIdx >= 0) {
+            const skipIdx = mode === 'cash' ? qIdx : cIdx;
+            const out = cells.filter((_, i) => i !== skipIdx).map(td => {
+              const sv = td.dataset.sv;
+              const raw = (sv !== undefined && sv !== '') ? sv
+                : (() => { const c=td.cloneNode(true); c.querySelectorAll('.si,.cm').forEach(e=>e.remove()); return c.textContent.replace(/,/g,'').trim(); })();
+              const num = Number(raw);
+              return (raw !== '' && raw !== '—' && isFinite(num)) ? num : raw;
+            });
+            rows.push([id, name, ...out]);
+          } else {
+            const out = [];
+            cells.forEach((td, i) => {
+              if (mode === 'cash' && i === n-1) return;
+              if (mode === 'qty'  && i === n-2) return;
+              if (i <= 1) {
+                const c = td.cloneNode(true);
+                c.querySelectorAll('.si,.cm').forEach(e => e.remove());
+                out.push(c.textContent.trim());
+              } else if (i >= 2 && i <= n-3) {
+                out.push(Number(mode === 'cash'
+                  ? (td.dataset.cash ?? td.dataset.sv ?? 0)
+                  : (td.dataset.qty  ?? 0)));
+              } else {
+                const v = td.dataset.sv !== undefined ? td.dataset.sv : td.textContent.replace(/,/g,'').trim();
+                out.push(v !== '' && !isNaN(v) ? Number(v) : v);
+              }
+            });
+            rows.push([id, name, ...out]);
+          }
         }
       });
     });
@@ -2453,7 +2610,12 @@ let _lastPie = null;
 let _pieModalChart = null;
 
 function attachPieButton(entries, chartTitle, opts) {
-  _lastPie = { entries, chartTitle, modalFn: (opts && opts.modalFn) || _showPieModal };
+  const rows = opts && opts.rows;
+  if (S.dateMode === 'months' && rows) {
+    _lastPie = { entries, chartTitle, rows, modalFn: (e, t) => _showMonthlyBarModal(rows, t) };
+  } else {
+    _lastPie = { entries, chartTitle, modalFn: (opts && opts.modalFn) || _showPieModal };
+  }
   const actions = document.querySelector('#main .sbar-actions');
   if (!actions || actions.querySelector('.sbar-chart-btn')) return;
   const btn = document.createElement('button');
@@ -2581,10 +2743,27 @@ function dlCashBar(btn) {
   _showBarModal(months, cashVals, qtyVals, getTableTitle(tw));
 }
 
+// ── Monthly bar modal (sbar chart in months mode) ─────────────────────────
+function _showMonthlyBarModal(rows, title) {
+  const months = getSortedMonths();
+  const labels   = months.map(mk => { const [y,m]=mk.split('-'); return MN[+m-1]+' '+y; });
+  const cashVals = months.map(mk => {
+    const [y,m] = mk.split('-');
+    return rows.filter(r => Number(r.year)==+y && Number(r.month)==+m).reduce((a,r)=>a+(r.cash||0),0);
+  });
+  const qtyVals  = months.map(mk => {
+    const [y,m] = mk.split('-');
+    return rows.filter(r => Number(r.year)==+y && Number(r.month)==+m).reduce((a,r)=>a+(r.qty||0),0);
+  });
+  _showBarModal(labels, cashVals, qtyVals, title, true);
+}
+
 // ── Bar chart modal renderer ──────────────────────────────────────────────
-function _showBarModal(months, cashVals, qtyVals, title) {
+function _showBarModal(months, cashVals, qtyVals, title, showToggle) {
   const total    = cashVals.reduce((s, v) => s + v, 0);
   const totalQty = qtyVals.reduce((s, v) => s + v, 0);
+  // Store for toggle
+  window._barCash = cashVals; window._barQty = qtyVals; window._barMode = 'cash';
 
   document.getElementById('pieModalTitle').textContent = title;
   document.getElementById('pieModalSub').textContent   = `${months.length} month${months.length === 1 ? '' : 's'}`;
@@ -2613,6 +2792,17 @@ function _showBarModal(months, cashVals, qtyVals, title) {
       <td style="text-align:right;color:var(--acc);font-weight:700">${pct}%</td>
     </tr>`;
   }).join('');
+
+  // Inject / remove toggle buttons
+  const _mHdr = document.querySelector('#pieModal .pie-modal-hdr');
+  _mHdr.querySelectorAll('.bar-tog-row').forEach(e => e.remove());
+  if (showToggle) {
+    const togRow = document.createElement('div');
+    togRow.className = 'bar-tog-row';
+    togRow.innerHTML = '<button class="bar-tog active" id="barTogCash" onclick="_barToggle(\'cash\')">💰 Cash</button>' +
+                       '<button class="bar-tog" id="barTogQty" onclick="_barToggle(\'qty\')">📦 Qty</button>';
+    _mHdr.insertBefore(togRow, _mHdr.querySelector('.pie-close'));
+  }
 
   document.getElementById('pieModal').style.display = 'flex';
   if (_pieModalChart) { _pieModalChart.destroy(); _pieModalChart = null; }
@@ -2650,6 +2840,23 @@ function _showBarModal(months, cashVals, qtyVals, title) {
       }
     }
   });
+}
+
+function _barToggle(mode) {
+  window._barMode = mode;
+  document.getElementById('barTogCash')?.classList.toggle('active', mode === 'cash');
+  document.getElementById('barTogQty')?.classList.toggle('active', mode === 'qty');
+  const vals  = mode === 'cash' ? window._barCash : window._barQty;
+  const total = vals.reduce((s,v)=>s+v,0);
+  document.getElementById('pieModalTotal').textContent = fmt(total);
+  if (_pieModalChart) {
+    _pieModalChart.data.datasets[0].data  = vals;
+    _pieModalChart.data.datasets[0].label = mode === 'cash' ? 'Cash' : 'Qty';
+    _pieModalChart.update();
+  }
+  // Update table totals row
+  document.getElementById('pieModalTfoot3').textContent = mode === 'cash' ? fmt(total) : '—';
+  document.getElementById('pieModalTfoot4').textContent = mode === 'qty'  ? fmt(total) : '—';
 }
 
 // ── Open modal (top-of-page button) ──────────────────────────
@@ -2841,6 +3048,183 @@ function dlPieModalCSV() {
 function pieOverlayClick(e) {
   // Close if clicked on the overlay backdrop (not the modal itself)
   if (e.target === document.getElementById('pieModal')) closePieModal();
+}
+
+// ══ Oversite Dashboard ═══════════════════════════════════════
+function showOversite() {
+  if (!S.raw.length) {
+    showMain('<div class="err">Load data first, then open Oversite.</div>');
+    return;
+  }
+  const today    = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const curYear  = today.getFullYear();
+  const curMonth = today.getMonth() + 1;
+  const monthLbl = MN[curMonth - 1] + ' ' + curYear;
+  const todayDisp = todayStr.split('-').reverse().join('/');
+
+  const cols = [
+    { co: 'pupik',      ooCo: 'openorders',    retCo: 'returns-pupik', label: '🏢 Pupik',      color: 'var(--acc)'  },
+    { co: 'mt',         ooCo: 'openorders-mt', retCo: 'returns-mt',    label: '🐒 Monkeytime', color: 'var(--acc2)' },
+  ];
+
+  let html = `<div class="ov-header">
+    <h2>🏠 Oversite Dashboard</h2>
+    <div class="ov-sub">Today: <b>${todayDisp}</b> &nbsp;·&nbsp; Month: <b>${monthLbl}</b></div>
+  </div><div class="ov-grid">`;
+
+  cols.forEach(({ co, ooCo, retCo, label, color }) => {
+    const ordersToday = S.raw.filter(r => r.company === ooCo && r.date === todayStr);
+    const { cash: otCash, qty: otQty } = sumRows(ordersToday);
+    const otClients = new Set(ordersToday.map(r => r.clientID).filter(Boolean)).size;
+
+    const salesMTD = S.raw.filter(r => r.company === co && Number(r.year) === curYear && Number(r.month) === curMonth);
+    const { cash: smCash, qty: smQty } = sumRows(salesMTD);
+
+    const returnsMTD = S.raw.filter(r => r.company === retCo && Number(r.year) === curYear && Number(r.month) === curMonth);
+    const { cash: rmCash, qty: rmQty } = sumRows(returnsMTD);
+
+    const itemMap = {};
+    salesMTD.forEach(r => {
+      if (!r.itemSKU) return;
+      if (!itemMap[r.itemSKU]) itemMap[r.itemSKU] = { name: r.itemName || r.itemSKU, cash: 0, qty: 0 };
+      itemMap[r.itemSKU].cash += r.cash || 0;
+      itemMap[r.itemSKU].qty  += r.qty  || 0;
+    });
+    const top10 = Object.entries(itemMap).sort((a, b) => b[1].cash - a[1].cash).slice(0, 10);
+
+    const debtData = (S.debtRows || []).filter(r => r.company === co);
+
+    // ── Top 10 table ──
+    let top10Html = top10.length
+      ? `<div class="tw"><table><thead><tr>
+          <th style="text-align:left">#</th>
+          <th style="text-align:left">Item</th>
+          <th>Cash</th><th>Qty</th>
+         </tr></thead><tbody>` +
+        top10.map(([sku, it], i) =>
+          `<tr><td style="text-align:left;color:var(--muted)">${i+1}</td>
+           <td style="text-align:left" title="${esc(sku)}">${esc(it.name)}</td>
+           <td>${fmt(it.cash)}</td><td class="cm">${fmt(it.qty)}</td></tr>`
+        ).join('') + '</tbody></table></div>'
+      : '<div class="ov-empty">No sales data this month</div>';
+
+    // ── Debt summary ──
+    let debtHtml = '';
+    if (debtData.length) {
+      const mTotals = {};
+      let totOld = 0;
+      debtData.forEach(r => {
+        totOld += r.oldDebt || 0;
+        (r.months || []).forEach(m => {
+          if (!m.label) return;
+          mTotals[m.label] = (mTotals[m.label] || 0) + (m.amount || 0);
+        });
+      });
+      const grand = totOld + Object.values(mTotals).reduce((a, v) => a + v, 0);
+      debtHtml = `<div class="ov-debt-summary">
+        <div class="ov-debt-row"><span class="ov-debt-lbl">Old Debt</span><span class="ov-debt-val cr">${fmt(totOld)}</span></div>` +
+        Object.entries(mTotals).map(([lbl, amt]) =>
+          `<div class="ov-debt-row"><span class="ov-debt-lbl">${esc(lbl)}</span><span class="ov-debt-val cr">${fmt(amt)}</span></div>`
+        ).join('') +
+        `<div class="ov-debt-row" style="border-top:1px solid var(--bdr);margin-top:6px;padding-top:6px">
+          <span class="ov-debt-lbl" style="font-weight:700">Total</span>
+          <span class="ov-debt-val cr" style="font-weight:700">${fmt(grand)}</span>
+        </div>
+        <button class="ov-debt-btn" onclick="openDebtModal('${co}')">📋 Full Report</button>
+      </div>`;
+    } else {
+      debtHtml = '<div class="ov-empty">No debt data</div>';
+    }
+
+    html += `<div class="ov-col">
+      <div class="ov-col-hdr" style="border-left-color:${color}">${label}</div>
+
+      <div class="ov-section">
+        <div class="ov-section-title">📋 Orders Today (Doc 36)</div>
+        <div class="ov-kpi-row">
+          <div class="ov-kpi"><div class="ov-kpi-val">${otClients}</div><div class="ov-kpi-lbl">Clients</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-val">${fmt(otQty)}</div><div class="ov-kpi-lbl">Qty</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-val" style="color:var(--grn)">${fmt(otCash)}</div><div class="ov-kpi-lbl">Cash</div></div>
+        </div>
+      </div>
+
+      <div class="ov-section">
+        <div class="ov-section-title">💰 Sales MTD — ${monthLbl}</div>
+        <div class="ov-kpi-row">
+          <div class="ov-kpi"><div class="ov-kpi-val" style="color:var(--grn)">${fmt(smCash)}</div><div class="ov-kpi-lbl">Cash</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-val">${fmt(smQty)}</div><div class="ov-kpi-lbl">Qty</div></div>
+        </div>
+      </div>
+
+      <div class="ov-section">
+        <div class="ov-section-title">🏆 Top 10 Items MTD</div>
+        ${top10Html}
+      </div>
+
+      <div class="ov-section">
+        <div class="ov-section-title">↩️ Returns MTD</div>
+        <div class="ov-kpi-row">
+          <div class="ov-kpi"><div class="ov-kpi-val" style="color:var(--red)">${fmt(rmCash)}</div><div class="ov-kpi-lbl">Cash</div></div>
+          <div class="ov-kpi"><div class="ov-kpi-val">${fmt(rmQty)}</div><div class="ov-kpi-lbl">Qty</div></div>
+        </div>
+      </div>
+
+      <div class="ov-section">
+        <div class="ov-section-title">💳 Open Debt</div>
+        ${debtHtml}
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  showMain(html);
+}
+
+// ── Debt modal ────────────────────────────────────────────────
+function openDebtModal(co) {
+  const debtData = (S.debtRows || []).filter(r => r.company === co);
+  if (!debtData.length) return;
+  const mLabels = (debtData[0].months || []).map(m => m.label);
+  const coLabel = co === 'pupik' ? 'Pupik' : 'Monkeytime';
+
+  let html = `<thead><tr>
+    <th style="text-align:left">Client ID</th>
+    <th style="text-align:left">Client Name</th>
+    <th style="text-align:left">Agent</th>
+    <th>Old Debt</th>` +
+    mLabels.map(l => `<th>${esc(l)}</th>`).join('') +
+    `<th>Total</th></tr></thead><tbody>`;
+
+  let totOld = 0, totM = mLabels.map(() => 0), totGrand = 0;
+  debtData.slice().sort((a, b) => (a.clientName || '').localeCompare(b.clientName || '')).forEach(r => {
+    const rowTot = (r.oldDebt || 0) + (r.months || []).reduce((s, m) => s + (m.amount || 0), 0);
+    totOld += r.oldDebt || 0; totGrand += rowTot;
+    html += `<tr>
+      <td>${esc(r.clientID || '')}</td>
+      <td>${esc(r.clientName || '')}</td>
+      <td>${esc(r.agent || '')}</td>
+      <td class="cr">${fmt(r.oldDebt || 0)}</td>` +
+      (r.months || []).map((m, i) => {
+        totM[i] = (totM[i] || 0) + (m.amount || 0);
+        return `<td class="cr">${fmt(m.amount || 0)}</td>`;
+      }).join('') +
+      `<td class="cr" style="font-weight:700">${fmt(rowTot)}</td></tr>`;
+  });
+  html += `</tbody><tfoot><tr>
+    <td colspan="3">Total</td>
+    <td class="cr">${fmt(totOld)}</td>` +
+    totM.map(v => `<td class="cr">${fmt(v)}</td>`).join('') +
+    `<td class="cr" style="font-weight:700">${fmt(totGrand)}</td></tr></tfoot>`;
+
+  document.getElementById('debtModalTitle').textContent = `💳 Open Debt — ${coLabel}`;
+  document.getElementById('debtModalTable').innerHTML = html;
+  document.getElementById('debtModal').style.display = 'flex';
+}
+function closeDebtModal() { document.getElementById('debtModal').style.display = 'none'; }
+function dlDebtModalCSV() {
+  const table = document.getElementById('debtModalTable');
+  if (table) dlCSV(table, [[document.getElementById('debtModalTitle').textContent]]);
 }
 
 function chkApply(){
