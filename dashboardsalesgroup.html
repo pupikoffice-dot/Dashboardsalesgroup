@@ -1156,9 +1156,11 @@ function _loadData(data) {
 }
 
 function wmsCoKey(co) {
-  if (co === 'openorders') return 'pupik';
+  if (co === 'openorders')    return 'pupik';
   if (co === 'openorders-mt') return 'mt';
   if (co === 'openorders-grow') return 'grow';
+  if (co === 'orders-pupik')  return 'pupik';
+  if (co === 'orders-mt')     return 'mt';
   return co;
 }
 
@@ -3512,8 +3514,8 @@ function showOversite() {
   const todayDisp = todayStr.split('-').reverse().join('/');
 
   const cols = [
-    { co: 'pupik',      ooCo: 'openorders',    retCo: 'returns-pupik', label: '🏢 Pupik',      color: 'var(--acc)'  },
-    { co: 'mt',         ooCo: 'openorders-mt', retCo: 'returns-mt',    label: '🐒 Monkeytime', color: 'var(--acc2)' },
+    { co: 'pupik',      ooCo: 'orders-pupik', retCo: 'returns-pupik', label: '🏢 Pupik',      color: 'var(--acc)'  },
+    { co: 'mt',         ooCo: 'orders-mt',    retCo: 'returns-mt',    label: '🐒 Monkeytime', color: 'var(--acc2)' },
   ];
 
   let html = `<div class="ov-header">
