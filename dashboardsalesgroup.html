@@ -1110,6 +1110,10 @@ function _debtMonths(months) {
   return (months || []).filter(m => !/יתרה\s*מצטברת/i.test(m.label || ''));
 }
 
+function _debtLastUpdateStr() {
+  return window.__DEBT_LAST_UPDATE__ || S.debtLastUpdate || '';
+}
+
 function _debtRowTotal(r) {
   return (r.oldDebt || 0) + _debtMonths(r.months).reduce((s, m) => s + (m.amount || 0), 0);
 }
@@ -1141,7 +1145,7 @@ function _loadData(data) {
     if (!S.itemPrice[r.company]) S.itemPrice[r.company] = {};
     S.itemPrice[r.company][r.itemSKU] = r.price;
   });
-  S.debtLastUpdate = data.debtLastUpdate || '';
+  S.debtLastUpdate = data.debtLastUpdate || window.__DEBT_LAST_UPDATE__ || '';
   let debtSrc = data.debtRows;
   if ((!debtSrc || !debtSrc.length) && window.__DASHBOARD_DATA__?.debtRows?.length)
     debtSrc = window.__DASHBOARD_DATA__.debtRows;
@@ -3429,27 +3433,26 @@ function _computeStockAlerts(co) {
 function _stockAlertsHtml(a) {
   const smRows = a.slowMovers.map(r =>
     '<tr><td style="text-align:left" title="' + esc(r.sku) + '">' + esc(r.name) + '</td>' +
+    '<td style="text-align:left;font-size:.71rem;color:var(--muted)">' + esc(r.sku) + '</td>' +
     '<td class="cm">' + fmt(r.qty) + '</td>' +
     '<td style="color:var(--muted)">' + (r.lastDate ? r.lastDate.split('-').reverse().join('/') : '—') + '</td>' +
-    '<td style="color:var(--amber);font-weight:700">' + (r.daysGap === 9999 ? '—' : r.daysGap) + '</td>' +
-    '<td style="color:var(--muted);font-size:.71rem">' + esc(r.cat) + '</td></tr>'
+    '<td style="color:var(--amber);font-weight:700">' + (r.daysGap === 9999 ? '—' : r.daysGap) + '</td></tr>'
   ).join('');
   const sm1 = a.slowMovers.length
     ? '<div class="tw"><table><thead><tr>' +
-      '<th style="text-align:left">Item</th><th>Stock</th><th>Last Sale</th><th>Days</th><th>Category</th>' +
+      '<th style="text-align:left">Item</th><th style="text-align:left">SKU</th><th>Stock</th><th>Last Sale</th><th>Days</th>' +
       '</tr></thead><tbody>' + smRows + '</tbody></table></div>'
     : '<div class="ov-empty">All stocked items sold in the last 30 days.</div>';
 
   const nvRows = a.neverSold.map(r =>
     '<tr><td style="text-align:left" title="' + esc(r.sku) + '">' + esc(r.name) + '</td>' +
-    '<td class="cm">' + fmt(r.qty) + '</td>' +
-    '<td style="color:var(--muted);font-size:.71rem">' + esc(r.cat) + '</td>' +
-    '<td style="color:var(--muted);font-size:.71rem">' + esc(r.supplier) + '</td></tr>'
+    '<td style="text-align:left;font-size:.71rem;color:var(--muted)">' + esc(r.sku) + '</td>' +
+    '<td class="cm">' + fmt(r.qty) + '</td></tr>'
   ).join('');
   const nv1 = a.neverSold.length
     ? '<div style="margin-top:12px;font-size:.72rem;font-weight:700;color:var(--muted2);padding-left:2px">Never Sold (stock ≥10, top 10 by qty)</div>' +
       '<div class="tw"><table><thead><tr>' +
-      '<th style="text-align:left">Item</th><th>Stock</th><th>Category</th><th>Supplier</th>' +
+      '<th style="text-align:left">Item</th><th style="text-align:left">SKU</th><th>Stock</th>' +
       '</tr></thead><tbody>' + nvRows + '</tbody></table></div>'
     : '';
 
@@ -3707,7 +3710,7 @@ function showOversite() {
       </div>
 
       <div class="ov-section">
-        <div class="ov-section-title">💳 Open Debt</div>
+        <div class="ov-section-title">💳 Open Debt${_debtLastUpdateStr() ? ` <span style="font-weight:400;font-size:.72rem;color:var(--muted)">· Last Update: ${_debtLastUpdateStr()}</span>` : ''}</div>
         ${debtHtml}
       </div>
       ${_stockAlertsHtml(_computeStockAlerts(co))}
@@ -3758,7 +3761,7 @@ function openDebtModal(co) {
     totM.map(v => `<td class="cr">${fmt(v)}</td>`).join('') +
     `<td class="cr" style="font-weight:700">${fmt(totGrand)}</td></tr></tfoot>`;
 
-  const _dlu = (window.__DEBT_LAST_UPDATE__ || S.debtLastUpdate) ? `  · Last Update: ${window.__DEBT_LAST_UPDATE__ || S.debtLastUpdate}` : '';
+  const _dlu = _debtLastUpdateStr() ? `  · Last Update: ${_debtLastUpdateStr()}` : '';
   document.getElementById('debtModalTitle').textContent =
     `💳 Open Debt — ${coLabel} (Total ≥ ${_DEBT_REPORT_MIN_TOTAL})${_dlu}`;
   document.getElementById('debtModalTable').innerHTML = html;
