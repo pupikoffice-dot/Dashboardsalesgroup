@@ -517,6 +517,12 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
 }
 .sku-col-filter:focus { outline: none; border-color: var(--acc); }
 .sku-col-filter::placeholder { color: var(--muted); }
+.col-filter-wrap { display: flex; gap: 2px; margin-top: 3px; align-items: center; }
+.col-filter { flex: 1; min-width: 0; padding: 2px 4px; font-size: .7rem; border-radius: 3px; border: 1px solid var(--bdr); background: var(--sur2); color: var(--txt); font-family: inherit; box-sizing: border-box; }
+.col-filter:focus { outline: none; border-color: var(--acc); }
+.col-filter::placeholder { color: var(--muted); }
+.col-filter-mode { font-size: .6rem; padding: 1px 5px; border-radius: 3px; border: 1px solid var(--bdr); background: var(--acc); color: #fff; cursor: pointer; white-space: nowrap; line-height: 1.4; font-family: inherit; }
+.col-filter-mode.col-filter-mode-out { background: var(--amber); color: #1a1200; }
 .sbar-minimize-btn {
   background: var(--sur2);
   border: 1px solid var(--bdr);
@@ -1062,6 +1068,7 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="data_loader.js" charset="utf-8"></script>
+<script src="dashboard-shared.js" charset="utf-8"></script>
 <script>
 'use strict';
 
@@ -2298,92 +2305,13 @@ function injectDlButtons() {
   attachSKUFilter();
 }
 
-// ══ Column inline filters (SKU, Item Name, Price) ═════════════
-function attachSKUFilter() {           // called from injectDlButtons — keep name
-  document.querySelectorAll('#main table').forEach(table => {
-    if (table._colFilters) return;
-    table._colFilters = true;
-    const ths = [...table.querySelectorAll('thead th')];
-    const find = pat => ths.findIndex(th => pat.test(th.textContent.trim()));
-    const skuIdx   = find(/^sku\b/i);
-    const nameIdx  = find(/^item\s*name/i);
-    const priceIdx = find(/^price\b/i);
-    if (skuIdx   !== -1) _attachColFilter(table, ths[skuIdx],   skuIdx,   'in-out');
-    if (nameIdx  !== -1) _attachColFilter(table, ths[nameIdx],  nameIdx,  'in-out');
-    if (priceIdx !== -1) _attachColFilter(table, ths[priceIdx], priceIdx, 'in-out');
-  });
-}
-function _attachColFilter(table, th, colIdx, modes) {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;gap:2px;margin-top:3px;align-items:center';
-  const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.className = 'col-filter';
-  inp.placeholder = '▾ filter…';
-  inp.dataset.colIdx = colIdx;
-  inp.style.cssText = 'flex:1;min-width:0;padding:2px 4px;font-size:.7rem;border-radius:3px;border:1px solid var(--bdr);background:var(--bg2);color:var(--fg)';
-  inp.addEventListener('click', e => e.stopPropagation());
-  inp.addEventListener('input', () => _applyTableFilters(table));
-  wrap.appendChild(inp);
-  if (modes === 'in-out') {
-    const btn = document.createElement('button');
-    btn.className = 'col-filter-mode';
-    btn.textContent = 'IN';
-    btn.dataset.mode = 'in';
-    btn.title = 'Toggle: show matching / hide matching';
-    btn.style.cssText = 'font-size:.6rem;padding:1px 5px;border-radius:3px;border:1px solid var(--bdr);background:var(--acc);color:#fff;cursor:pointer;white-space:nowrap;line-height:1.4';
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const nowIn = btn.dataset.mode === 'in';
-      btn.dataset.mode = nowIn ? 'out' : 'in';
-      btn.textContent  = nowIn ? 'OUT' : 'IN';
-      btn.style.background = nowIn ? 'var(--red,#c0392b)' : 'var(--acc)';
-      _applyTableFilters(table);
-    });
-    inp._modeBtn = btn;
-    wrap.appendChild(btn);
-  }
-  th.appendChild(wrap);
+// ══ Column inline filters (SKU, Item Name, Price) — Dashboard/shared ══
+function attachSKUFilter() {
+  const main = document.getElementById('main');
+  if (main && window.DashboardShared) window.DashboardShared.attachAllTableColumnFilters(main);
 }
 function _applyTableFilters(table) {
-  const tbody = table.querySelector('tbody');
-  if (!tbody) return;
-  // Collect active filters
-  const filters = [...table.querySelectorAll('thead .col-filter')].map(inp => {
-    const q = inp.value.trim().toLowerCase();
-    const mode = inp._modeBtn ? inp._modeBtn.dataset.mode : 'in';
-    return { ci: Number(inp.dataset.colIdx), q, mode };
-  }).filter(f => f.q !== '');
-  // Show/hide rows
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const cells = [...tr.querySelectorAll('td')];
-    let vis = true;
-    for (const f of filters) {
-      const txt = (cells[f.ci]?.textContent || '').toLowerCase();
-      const terms = f.q.split('&').map(t => t.trim()).filter(t => t);
-      if (f.mode === 'in'  && !terms.some(t => txt.includes(t))) { vis = false; break; }
-      if (f.mode === 'out' &&  terms.some(t => txt.includes(t))) { vis = false; break; }
-    }
-    tr.style.display = vis ? '' : 'none';
-  });
-  // Update tfoot totals
-  const footRow = table.querySelector('tfoot tr');
-  if (!footRow) return;
-  const footCells = [...footRow.querySelectorAll('td')];
-  const visRows = [...tbody.querySelectorAll('tr')].filter(r => r.style.display !== 'none');
-  footCells.forEach((fc, ci) => {
-    if (ci <= 1) return;
-    const vals = visRows.map(tr => {
-      const td = tr.querySelectorAll('td')[ci];
-      const sv = td?.dataset?.sv;
-      if (sv == null || sv === '') return null;
-      const n = Number(sv);
-      return (isFinite(n) && sv !== '-99999' && sv !== '-1') ? n : null;
-    }).filter(v => v !== null);
-    if (!vals.length) return;
-    const sum = vals.reduce((a, b) => a + b, 0);
-    fc.textContent = Number.isInteger(sum) ? fmt0(sum) : fmt2(sum);
-  });
+  if (window.DashboardShared) window.DashboardShared.applyTableColumnFilters(table);
 }
 
 // Escape a value for CSV
@@ -2800,35 +2728,7 @@ function exportAll() {
 
 // ── Column sort ───────────────────────────────────────────────
 function sortTable(th) {
-  const table = th.closest('table');
-  const tbody = table.querySelector('tbody');
-  if (!tbody) return;
-  const idx = th.cellIndex;
-  const asc = th.dataset.sd !== 'asc';
-  // Reset all headers in this table
-  table.querySelectorAll('th.sortable').forEach(h => {
-    h.dataset.sd = '';
-    const si = h.querySelector('.si');
-    if (si) si.textContent = ' ↕';
-  });
-  th.dataset.sd = asc ? 'asc' : 'desc';
-  const si = th.querySelector('.si');
-  if (si) si.textContent = asc ? ' ↑' : ' ↓';
-  const rows = [...tbody.querySelectorAll('tr')];
-  rows.sort((a, b) => {
-    const ac = a.cells[idx], bc = b.cells[idx];
-    if (!ac || !bc) return 0;
-    // Use data-sv for numeric sort value if present
-    const av = (ac.dataset.sv !== undefined && ac.dataset.sv !== '') ? Number(ac.dataset.sv) : NaN;
-    const bv = (bc.dataset.sv !== undefined && bc.dataset.sv !== '') ? Number(bc.dataset.sv) : NaN;
-    if (!isNaN(av) && !isNaN(bv)) return asc ? av - bv : bv - av;
-    // Fall back to text sort (strips commas for numbers)
-    const at = ac.textContent.trim(), bt = bc.textContent.trim();
-    const an = parseFloat(at.replace(/,/g,'')), bn = parseFloat(bt.replace(/,/g,''));
-    if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
-    return asc ? at.localeCompare(bt) : bt.localeCompare(at);
-  });
-  rows.forEach(r => tbody.appendChild(r));
+  if (window.DashboardShared) return window.DashboardShared.sortTableDom(th);
 }
 // Delegated click handler — catches all sortable headers inside #main
 document.getElementById('main').addEventListener('click', e => {
