@@ -97,6 +97,16 @@ header h1 {
 }
 .sub { color: var(--muted); font-size: .75rem; margin-top: 1px; }
 .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.user-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--sur2); border: 1px solid var(--bdr);
+  border-radius: var(--r-full); padding: 4px 12px;
+  font-size: .72rem; color: var(--fg); cursor: pointer;
+  transition: border-color .15s;
+}
+.user-chip:hover { border-color: var(--acc); }
+.user-chip .uc-icon { font-size: .85rem; }
+.user-chip .uc-name { font-weight: 600; color: var(--acc); }
 
 .data-badge {
   background: var(--sur2);
@@ -879,6 +889,10 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
   </div>
   <div class="hdr-right">
     <div class="data-badge" id="dataBadge">No data loaded</div>
+    <div class="user-chip" id="userChip" onclick="promptUserName()" title="Click to change user">
+      <span class="uc-icon">👤</span>
+      <span class="uc-name" id="userChipName">...</span>
+    </div>
     <button class="refresh-btn" onclick="refreshData()" title="Reload data_loader.js / data.json from disk">↺ Refresh</button>
   </div>
 </header>
@@ -1211,6 +1225,22 @@ function _dataFetchUrl() {
 }
 
 // ══ Refresh ══════════════════════════════════════════════════
+// ── User chip ──────────────────────────────────────────────
+function _initUserChip() {
+  let name = localStorage.getItem('dashUser') || '';
+  if (!name) name = promptUserName(true) || 'User';
+  document.getElementById('userChipName').textContent = name;
+}
+function promptUserName(silent) {
+  const cur = localStorage.getItem('dashUser') || '';
+  const name = window.prompt('Your name:', cur);
+  if (name === null) return cur;
+  const trimmed = name.trim() || 'User';
+  localStorage.setItem('dashUser', trimmed);
+  document.getElementById('userChipName').textContent = trimmed;
+  return trimmed;
+}
+
 function refreshData() {
   if (location.protocol === 'file:') { location.reload(); return; }
   showMain('<div class="spin-wrap"><div class="spin"></div> Loading data…</div>');
@@ -1224,6 +1254,7 @@ function refreshData() {
 // file://: use data_loader.js (script tag already executed above)
 // HTTP(S): always fetch fresh — GitHub Pages uses raw.githubusercontent.com
 //          to bypass CDN; other servers use ./data.json with cache-bust.
+_initUserChip();
 if (location.protocol === 'file:') {
   if (window.__DASHBOARD_DATA__) _loadData(window.__DASHBOARD_DATA__);
   // else: welcome screen shown by default
