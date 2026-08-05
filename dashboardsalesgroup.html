@@ -31,6 +31,10 @@
   --grn-bg:    rgba(45,212,191,.12);
   --red-bg:    rgba(251,191,36,.12);
   --red-b:     rgba(251,191,36,.30);
+  --co-pupik:  #818cf8;
+  --co-mt:     #38bdf8;
+  --co-grow:   #fbbf24;
+  --co-gold:   #eab308;
 
   /* Text */
   --txt:       #dae2fd;
@@ -704,18 +708,25 @@ input[type="date"]:focus { outline: none; border-color: var(--acc); }
 .ov-sub { font-size: .78rem; color: var(--muted2); }
 .ov-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 @media (max-width: 900px) { .ov-grid { grid-template-columns: 1fr; } }
-.ov-col { display: flex; flex-direction: column; gap: 14px; }
+.ov-col { display: flex; flex-direction: column; gap: 14px; --ov-accent: var(--acc); }
+.ov-col--accented { --ov-accent: var(--co-accent, var(--acc)); }
+.ov-col--accented .ov-section { border-top: 2px solid color-mix(in srgb, var(--ov-accent) 45%, transparent); }
 
 .ov-col-hdr {
   font-size: .95rem;
   font-weight: 700;
   padding: 12px 16px;
   background: rgba(23,31,51,0.7);
-  border-left: 3px solid var(--acc);
-  border-radius: var(--r);
   border: 1px solid var(--bdr);
-  border-left-width: 3px;
+  border-left: 3px solid var(--ov-accent, var(--acc));
+  border-radius: var(--r);
   letter-spacing: -.01em;
+  color: var(--ov-accent, var(--txt));
+}
+.ov-col--accented .ov-col-hdr {
+  background: color-mix(in srgb, var(--ov-accent) 14%, rgba(23, 31, 51, 0.75));
+  border-color: color-mix(in srgb, var(--ov-accent) 35%, var(--bdr));
+  border-left-color: var(--ov-accent);
 }
 
 .ov-section {
@@ -3448,9 +3459,10 @@ function showOversite() {
   const todayDisp = todayStr.split('-').reverse().join('/');
 
   const cols = [
-    { co: 'pupik',      ooCo: 'orders-pupik', retCo: 'returns-pupik', label: '🏢 Pupik',      color: 'var(--acc)'  },
-    { co: 'mt',         ooCo: 'orders-mt',    retCo: 'returns-mt',    label: '🐒 Monkeytime', color: 'var(--acc2)' },
+    { co: 'pupik',      ooCo: 'orders-pupik', retCo: 'returns-pupik', label: '🏢 Pupik',      color: 'var(--co-pupik)'  },
+    { co: 'mt',         ooCo: 'orders-mt',    retCo: 'returns-mt',    label: '🐒 Monkeytime', color: 'var(--co-mt)' },
   ];
+  const multiCo = cols.length > 1;
 
   let html = `<div class="ov-header">
     <h2>🏠 Oversite Dashboard</h2>
@@ -3593,8 +3605,8 @@ function showOversite() {
       debtHtml = '<div class="ov-empty">No debt in loaded data — <code>debtRows</code> is empty in data.json. Re-run the Excel export with the updated ExportDashboardData.bas (Debtpupik / Debtmt sheets).</div>';
     }
 
-    html += `<div class="ov-col">
-      <div class="ov-col-hdr" style="border-left-color:${color}">${label}</div>
+    html += `<div class="ov-col${multiCo ? ' ov-col--accented' : ''}"${multiCo ? ` style="--co-accent:${color}"` : ''}>
+      <div class="ov-col-hdr">${label}</div>
 
       <div class="ov-section">
         <div class="ov-section-title">📋 Orders Today (Doc 36)</div>
